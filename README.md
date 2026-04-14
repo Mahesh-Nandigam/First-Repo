@@ -25,7 +25,15 @@ This is a dynamic Snake Game built using Node.js and deployed on Google Cloud Ru
 - GitHub version control
 
 ## 📸 Screenshots
-(Add screenshots here)
+
+### 🎮 Gameplay
+![Gameplay](./Snake.png)
+
+### 💀 Game Over
+![Game Over](./Game_over.png)
+
+### 🌐 Live Demo
+![Live Demo](./live_demo.png)
 
 ## 🧑‍💻 Contribution Note
 This project was built with the help of AI tools for guidance, while I implemented, tested, and deployed the system myself.
