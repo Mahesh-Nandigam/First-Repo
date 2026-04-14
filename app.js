@@ -10,7 +10,8 @@ const UI = {
     level: document.getElementById('current-level'),
     finalScore: document.getElementById('final-score'),
     startBtn: document.getElementById('start-btn'),
-    restartBtn: document.getElementById('restart-btn')
+    restartBtn: document.getElementById('restart-btn'),
+    lives: document.getElementById('current-lives')
 };
 
 // Game Settings & State
@@ -34,6 +35,7 @@ let gameLoopRef = null;
 let isGameOver = false;
 let isPaused = false;
 let frameCount = 0;
+let lives = 3;
 
 // Powerup state
 let activePowerUp = null; // 'shield', '2x', 'slow'
@@ -63,6 +65,8 @@ function initGame() {
     activePowerUp = null;
     obstacles = [];
     powerUpObject = null;
+    lives = 3;
+    UI.lives.innerText = lives;
     
     updateScoreBoard();
     spawnFood();
@@ -155,11 +159,11 @@ function update() {
     
     let head = { x: snake[0].x + dx, y: snake[0].y + dy };
     
-    // Screen Wrap Logic (or Death, here let's do Screen Wrap but walls are dynamic obstacles)
-    if (head.x < 0) head.x = TILE_COUNT - 1;
-    if (head.x >= TILE_COUNT) head.x = 0;
-    if (head.y < 0) head.y = TILE_COUNT - 1;
-    if (head.y >= TILE_COUNT) head.y = 0;
+    // Wall Collision
+    if (head.x < 0 || head.x >= TILE_COUNT || head.y < 0 || head.y >= TILE_COUNT) {
+        triggerGameOver();
+        return;
+    }
 
     // Check Self Collision
     for (let i = 0; i < snake.length; i++) {
@@ -259,7 +263,6 @@ function checkLevelUp() {
 }
 
 function triggerGameOver() {
-    isGameOver = true;
     SoundEngine.playDieSound();
     
     // Screen Shake via CSS
@@ -268,14 +271,46 @@ function triggerGameOver() {
         document.body.classList.remove('shake');
     }, 300);
     
-    if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('neonSnakeHighScore', highScore);
-        UI.highScore.innerText = highScore;
+    if (lives > 1) {
+        lives--;
+        UI.lives.innerText = lives;
+        
+        // respawn snake
+        snake = [
+            { x: 10, y: 10 },
+            { x: 10, y: 11 },
+            { x: 10, y: 12 }
+        ];
+        dx = 0;
+        dy = -1;
+        nextDx = 0;
+        nextDy = -1;
+        activePowerUp = null;
+        
+        // Remove obstacles near the spawn point completely
+        obstacles = obstacles.filter(obs => manhattanDistance(obs, {x:10, y:10}) > 3);
+        
+        // Give player a 1 second cool-down pause before the snake moves again
+        isPaused = true;
+        setTimeout(() => {
+            isPaused = false;
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }, 1000);
+    } else {
+        lives = 0;
+        UI.lives.innerText = lives;
+        isGameOver = true;
+        
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('neonSnakeHighScore', highScore);
+            UI.highScore.innerText = highScore;
+        }
+        
+        UI.finalScore.innerText = score;
+        UI.gameOver.classList.remove('hidden');
     }
-    
-    UI.finalScore.innerText = score;
-    UI.gameOver.classList.remove('hidden');
 }
 
 function updateScoreBoard() {
